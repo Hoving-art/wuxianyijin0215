@@ -64,20 +64,21 @@ export async function calculateContributions(): Promise<CalculationResult[]> {
     avgSalaries.push({ employee_name, avg_salary: avgSalary });
   });
 
-  // 3. 从 cities 表中获取佛山的标准
-  const { data: cityStandard, error: cityError } = await supabase
+  // 3. 从 cities 表中获取所有城市标准，取第一条记录
+  const { data: citiesData, error: cityError } = await supabase
     .from('cities')
     .select('*')
-    .eq('city_name', '佛山')
-    .single();
+    .limit(1);
 
   if (cityError) {
     throw new Error(`读取城市标准失败: ${cityError.message}`);
   }
 
-  if (!cityStandard) {
-    throw new Error('未找到佛山的社保标准数据');
+  if (!citiesData || citiesData.length === 0) {
+    throw new Error('未找到任何城市标准数据，请先上传城市标准');
   }
+
+  const cityStandard = citiesData[0];
 
   // 4. 计算每位员工的缴费基数和公司应缴金额
   const results: CalculationResult[] = avgSalaries.map(({ employee_name, avg_salary }) => {
